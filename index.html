@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#25c2a0" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="USJロッカー" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>夜通しUSJ ロッカー事件</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+    <link rel="icon" href="./icons/icon-192.png" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="game-shell" aria-label="夜通しUSJ ロッカー事件">
+      <section class="topbar" aria-live="polite">
+        <div class="stage-chip" id="stageChip">出発前</div>
+        <div class="meters">
+          <div class="meter">
+            <span>混雑</span>
+            <strong id="waitMeter">朝イチ感</strong>
+          </div>
+          <div class="meter">
+            <span>パパ</span>
+            <strong id="moodMeter">わくわく</strong>
+          </div>
+          <div class="meter">
+            <span>状態</span>
+            <strong id="sleepMeter">眠気80%</strong>
+          </div>
+        </div>
+      </section>
+
+      <canvas id="gameCanvas" width="960" height="600" aria-label="ゲーム画面"></canvas>
+
+      <section class="dialogue" aria-live="polite">
+        <span id="speaker">ナレーション</span>
+        <p id="message">神奈川から大阪へ。夜通し走って、朝イチの列を目指せ。</p>
+      </section>
+
+      <section class="controls" aria-label="操作">
+        <button class="icon-button" id="leftButton" type="button" title="左">←</button>
+        <button class="primary-button" id="actionButton" type="button">スタート</button>
+        <button class="icon-button" id="rightButton" type="button" title="右">→</button>
+      </section>
+    </main>
+
+    <script>
+      if ("serviceWorker" in navigator && location.protocol !== "file:") {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+        });
+      }
+    </script>
+    <script src="./game.js"></script>
+  </body>
+</html>
