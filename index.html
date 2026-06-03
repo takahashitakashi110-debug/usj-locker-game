@@ -31,6 +31,10 @@
             <strong id="sleepMeter">眠気80%</strong>
           </div>
         </div>
+        <div class="utility-buttons" aria-label="補助操作">
+          <button class="tool-button" id="musicButton" type="button" title="音楽のオン/オフ" aria-label="音楽のオン/オフ" aria-pressed="false">♪</button>
+          <button class="tool-button" id="helpButton" type="button" title="操作説明" aria-label="操作説明">?</button>
+        </div>
       </section>
 
       <canvas id="gameCanvas" width="960" height="600" aria-label="ゲーム画面"></canvas>
@@ -44,6 +48,23 @@
         <button class="icon-button" id="leftButton" type="button" title="左">←</button>
         <button class="primary-button" id="actionButton" type="button">スタート</button>
         <button class="icon-button" id="rightButton" type="button" title="右">→</button>
+      </section>
+
+      <section class="help-overlay" id="helpOverlay" hidden>
+        <div class="help-panel" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+          <header class="help-header">
+            <h1 id="helpTitle">操作説明</h1>
+            <button class="tool-button" id="closeHelpButton" type="button" title="閉じる" aria-label="閉じる">×</button>
+          </header>
+          <div class="help-list">
+            <p><strong>出発前</strong><span>攻略モードか再現モードを選び、中央ボタンで開始。</span></p>
+            <p><strong>夜の高速</strong><span>左右ボタンで車線変更。コーンを避け、コーヒーを取る。</span></p>
+            <p><strong>仮眠</strong><span>メーターが緑の位置に来たらアラームを止める。</span></p>
+            <p><strong>早朝の列</strong><span>列の流れが緑の位置に来たら前へ進む。</span></p>
+            <p><strong>ロッカー</strong><span>狙い変更で投入口などを選び、投入。焦りで手が震える時は深呼吸。</span></p>
+            <p><strong>音楽</strong><span>右上の♪でオン/オフ。スマホでは一度押すと鳴り始める。</span></p>
+          </div>
+        </div>
       </section>
     </main>
 

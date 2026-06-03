@@ -10,6 +10,10 @@
   const leftButton = document.getElementById("leftButton");
   const rightButton = document.getElementById("rightButton");
   const actionButton = document.getElementById("actionButton");
+  const musicButton = document.getElementById("musicButton");
+  const helpButton = document.getElementById("helpButton");
+  const closeHelpButton = document.getElementById("closeHelpButton");
+  const helpOverlay = document.getElementById("helpOverlay");
 
   const W = canvas.width;
   const H = canvas.height;
@@ -40,6 +44,21 @@
     returnSlot: "返却口",
     keyhole: "鍵穴",
     lockerDoor: "空きロッカー"
+  };
+  const musicPatterns = {
+    title: [392, 0, 494, 0, 523, 0, 494, 0],
+    drive: [220, 277, 330, 277, 247, 294, 349, 294],
+    nap: [196, 0, 247, 0, 262, 0, 247, 0],
+    queue: [330, 392, 440, 392, 349, 440, 494, 440],
+    locker: [247, 0, 262, 0, 294, 0, 262, 196],
+    finale: [392, 494, 523, 587, 523, 494, 392, 0]
+  };
+  const audioState = {
+    context: null,
+    master: null,
+    enabled: false,
+    timer: null,
+    step: 0
   };
 
   const game = {
@@ -102,6 +121,115 @@
   function setDialogue(name, text) {
     speaker.textContent = name;
     message.textContent = text;
+  }
+
+  function updateMusicButton() {
+    if (!musicButton) return;
+    musicButton.setAttribute("aria-pressed", audioState.enabled ? "true" : "false");
+    if (musicButton.classList) musicButton.classList.toggle("is-active", audioState.enabled);
+    musicButton.textContent = audioState.enabled ? "♪" : "♪";
+    musicButton.title = audioState.enabled ? "音楽を止める" : "音楽を鳴らす";
+  }
+
+  function ensureAudio() {
+    if (audioState.context) return true;
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return false;
+    audioState.context = new AudioContextClass();
+    audioState.master = audioState.context.createGain();
+    audioState.master.gain.value = 0.045;
+    audioState.master.connect(audioState.context.destination);
+    return true;
+  }
+
+  async function toggleMusic() {
+    if (!ensureAudio()) {
+      setDialogue("ナレーション", "このブラウザでは音楽再生に対応していないようです。");
+      return;
+    }
+    if (audioState.context.state === "suspended") {
+      await audioState.context.resume();
+    }
+    audioState.enabled = !audioState.enabled;
+    if (audioState.enabled) startMusic();
+    else stopMusic();
+    updateMusicButton();
+  }
+
+  function startMusic() {
+    stopMusic(false);
+    audioState.step = 0;
+    playMusicStep();
+    audioState.timer = window.setInterval(playMusicStep, 260);
+  }
+
+  function stopMusic(markDisabled = true) {
+    if (audioState.timer) {
+      window.clearInterval(audioState.timer);
+      audioState.timer = null;
+    }
+    if (markDisabled) {
+      audioState.enabled = false;
+      updateMusicButton();
+    }
+  }
+
+  function playTone(freq, duration = 0.18, type = "sine", volume = 0.45, delay = 0) {
+    if (!audioState.enabled || !audioState.context || !audioState.master || !freq) return;
+    const now = audioState.context.currentTime + delay;
+    const osc = audioState.context.createOscillator();
+    const gain = audioState.context.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, now);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(volume, now + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    osc.connect(gain);
+    gain.connect(audioState.master);
+    osc.start(now);
+    osc.stop(now + duration + 0.03);
+  }
+
+  function playMusicStep() {
+    if (!audioState.enabled) return;
+    const pattern = musicPatterns[game.scene] || musicPatterns.title;
+    const note = pattern[audioState.step % pattern.length];
+    const wave = game.scene === "drive" || game.scene === "locker" ? "square" : "triangle";
+    const volume = game.scene === "locker" ? 0.28 : 0.2;
+    if (note) playTone(note, 0.17, wave, volume);
+    if (audioState.step % 4 === 0) playTone(note ? note / 2 : 196, 0.22, "sine", 0.16);
+    audioState.step += 1;
+  }
+
+  function playSfx(kind) {
+    if (!audioState.enabled) return;
+    if (kind === "insert") {
+      playTone(660, 0.09, "triangle", 0.5);
+      playTone(880, 0.11, "triangle", 0.42, 0.08);
+    }
+    if (kind === "return") {
+      playTone(520, 0.08, "square", 0.42);
+      playTone(390, 0.1, "square", 0.34, 0.08);
+    }
+    if (kind === "miss") {
+      playTone(170, 0.12, "sawtooth", 0.3);
+    }
+    if (kind === "move") {
+      playTone(330, 0.06, "triangle", 0.22);
+    }
+    if (kind === "clear") {
+      playTone(523, 0.1, "triangle", 0.45);
+      playTone(659, 0.1, "triangle", 0.45, 0.1);
+      playTone(784, 0.18, "triangle", 0.42, 0.2);
+    }
+  }
+
+  function openHelp() {
+    helpOverlay.hidden = false;
+  }
+
+  function closeHelp() {
+    helpOverlay.hidden = true;
   }
 
   function resetRun() {
@@ -264,6 +392,7 @@
   function moveLane(dir) {
     if (game.scene !== "drive" || game.pending) return;
     game.lane = clamp(game.lane + dir, 0, laneXs.length - 1);
+    playSfx("move");
   }
 
   function handleAction() {
@@ -370,6 +499,7 @@
     if (game.scene !== "locker" || game.pending) return;
     game.locker.aimIndex = (game.locker.aimIndex + 1) % aimOrder.length;
     game.panic = clamp(game.panic + 2, 0, 100);
+    playSfx("move");
     setDialogue("ママ", `狙いを「${aimNames[currentAim()]}」に合わせた。手が少し震えている。`);
   }
 
@@ -380,6 +510,7 @@
     game.anger = clamp(game.anger + 3, 0, 100);
     advanceWait(3);
     game.locker.elapsed += 1.8;
+    playSfx("move");
     setDialogue("ママ", "すー、はー。少し落ち着いた。でも列は待ってくれない。");
   }
 
@@ -457,6 +588,7 @@
     game.panic = clamp(game.panic - 5, 0, 100);
     if (game.panic >= 70) game.locker.successUnderPanic = true;
     addCoinParticle(point.x, point.y, "#25c2a0", false);
+    playSfx("insert");
 
     if (game.locker.wrong >= 3) {
       setDialogue("ママ", "あっ、こっちが投入口だった！ みんな待ってる、急がなきゃ！");
@@ -467,6 +599,7 @@
     }
 
     if (game.locker.deposited >= 5) {
+      playSfx("clear");
       scheduleScene("finale", 1.1);
     }
   }
@@ -485,12 +618,16 @@
     }
 
     if (game.locker.wrong === 1) {
+      playSfx("return");
       setDialogue("ママ", "ちゃりん。あれ、ロッカーが反応しない。もう一枚かな。");
     } else if (game.locker.wrong === 2) {
+      playSfx("return");
       setDialogue("ママ", "ちゃりん、ちゃりん。壊れてる？ 別のロッカーも見てみよう。");
     } else if (game.locker.wrong === 3) {
+      playSfx("return");
       setDialogue("ナレーション", "返却口にコインが吸い寄せられていく。焦りで手の震えも大きくなる。");
     } else {
+      playSfx("return");
       setDialogue("パパ", "あれ、列がものすごく伸びてない？ ママまだ？");
     }
   }
@@ -501,6 +638,7 @@
     game.panic = clamp(game.panic + 12, 0, 100);
     advanceWait(8);
     addCoinParticle(point.x, point.y, "#ef476f", true);
+    playSfx("miss");
     setDialogue("ママ", "そこ鍵穴！ コイン入れるところじゃない！ 落ち着いて、私。");
   }
 
@@ -510,6 +648,7 @@
     game.panic = clamp(game.panic + 7, 0, 100);
     advanceWait(10);
     addCoinParticle(point.x, point.y, "#8ecae6", true);
+    playSfx("move");
 
     if (game.locker.wrong >= 2) {
       setDialogue("ママ", "空いてるロッカーを探してたら、上に投入口って書いてある……えっ。");
@@ -524,6 +663,7 @@
     game.panic = clamp(game.panic + 9, 0, 100);
     advanceWait(5);
     addCoinParticle(point.x, point.y, "#f7c948", true);
+    playSfx("miss");
     setDialogue("ママ", "手が震えてコインが落ちた。拾って、もう一回。");
   }
 
@@ -1230,6 +1370,13 @@
     }
   });
 
+  musicButton.addEventListener("click", toggleMusic);
+  helpButton.addEventListener("click", openHelp);
+  closeHelpButton.addEventListener("click", closeHelp);
+  helpOverlay.addEventListener("click", (event) => {
+    if (event.target === helpOverlay) closeHelp();
+  });
+
   leftButton.addEventListener("click", () => {
     if (game.scene === "title") setMode("normal");
     if (game.scene === "finale") {
@@ -1254,6 +1401,10 @@
 
   window.addEventListener("keydown", (event) => {
     const key = event.key.toLowerCase();
+    if (event.key === "Escape" && !helpOverlay.hidden) {
+      closeHelp();
+      return;
+    }
     if (event.key === "ArrowLeft" || key === "a") {
       if (game.scene === "drive") moveLane(-1);
       if (game.scene === "locker") breathe();

@@ -88,6 +88,12 @@ button {
   gap: 10px;
 }
 
+.utility-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 46px);
+  gap: 8px;
+}
+
 .meter {
   border-radius: 8px;
   padding: 10px 12px;
@@ -163,7 +169,8 @@ button {
 }
 
 .icon-button,
-.primary-button {
+.primary-button,
+.tool-button {
   min-height: 50px;
   border: 0;
   border-radius: 8px;
@@ -185,23 +192,107 @@ button {
   min-width: 170px;
 }
 
+.tool-button {
+  width: 46px;
+  min-height: 46px;
+  background: #8ecae6;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.tool-button.is-active {
+  background: var(--pink);
+  color: var(--cream);
+}
+
 .icon-button:active,
-.primary-button:active {
+.primary-button:active,
+.tool-button:active {
   transform: translateY(1px);
   box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.16);
 }
 
 .icon-button:focus-visible,
-.primary-button:focus-visible {
+.primary-button:focus-visible,
+.tool-button:focus-visible {
   outline: 3px solid var(--pink);
   outline-offset: 3px;
 }
 
 .icon-button:disabled,
-.primary-button:disabled {
+.primary-button:disabled,
+.tool-button:disabled {
   cursor: default;
   opacity: 0.45;
   transform: none;
+}
+
+.help-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(8, 11, 15, 0.72);
+}
+
+.help-overlay[hidden] {
+  display: none;
+}
+
+.help-panel {
+  width: min(720px, 100%);
+  max-height: min(680px, calc(100dvh - 32px));
+  overflow: auto;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel-solid);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.48);
+}
+
+.help-header {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.help-header h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.help-list {
+  padding: 10px 14px 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.help-list p {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.help-list p:last-child {
+  border-bottom: 0;
+}
+
+.help-list strong {
+  color: var(--sun);
+}
+
+.help-list span {
+  color: var(--ink);
+  line-height: 1.55;
 }
 
 @media (max-width: 720px) {
@@ -229,6 +320,11 @@ button {
   .meters {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
+  }
+
+  .utility-buttons {
+    grid-template-columns: repeat(2, 48px);
+    justify-content: end;
   }
 
   .meter {
@@ -268,12 +364,18 @@ button {
   }
 
   .icon-button,
-  .primary-button {
+  .primary-button,
+  .tool-button {
     min-height: 48px;
   }
 
   .primary-button {
     min-width: 132px;
     padding: 0 10px;
+  }
+
+  .help-list p {
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
 }
