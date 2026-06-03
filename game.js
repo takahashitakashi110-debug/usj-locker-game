@@ -57,6 +57,7 @@
     context: null,
     master: null,
     enabled: false,
+    userMuted: false,
     timer: null,
     step: 0
   };
@@ -137,7 +138,7 @@
     if (!AudioContextClass) return false;
     audioState.context = new AudioContextClass();
     audioState.master = audioState.context.createGain();
-    audioState.master.gain.value = 0.045;
+    audioState.master.gain.value = 0.135;
     audioState.master.connect(audioState.context.destination);
     return true;
   }
@@ -151,8 +152,20 @@
       await audioState.context.resume();
     }
     audioState.enabled = !audioState.enabled;
+    audioState.userMuted = !audioState.enabled;
     if (audioState.enabled) startMusic();
     else stopMusic();
+    updateMusicButton();
+  }
+
+  async function startMusicFromGesture() {
+    if (audioState.enabled || audioState.userMuted) return;
+    if (!ensureAudio()) return;
+    if (audioState.context.state === "suspended") {
+      await audioState.context.resume();
+    }
+    audioState.enabled = true;
+    startMusic();
     updateMusicButton();
   }
 
@@ -195,9 +208,9 @@
     const pattern = musicPatterns[game.scene] || musicPatterns.title;
     const note = pattern[audioState.step % pattern.length];
     const wave = game.scene === "drive" || game.scene === "locker" ? "square" : "triangle";
-    const volume = game.scene === "locker" ? 0.28 : 0.2;
+    const volume = game.scene === "locker" ? 0.34 : 0.25;
     if (note) playTone(note, 0.17, wave, volume);
-    if (audioState.step % 4 === 0) playTone(note ? note / 2 : 196, 0.22, "sine", 0.16);
+    if (audioState.step % 4 === 0) playTone(note ? note / 2 : 196, 0.22, "sine", 0.2);
     audioState.step += 1;
   }
 
@@ -291,6 +304,10 @@
       finishStory();
     }
 
+    if (audioState.enabled) {
+      audioState.step = 0;
+      playMusicStep();
+    }
     updateControls();
     updateHud();
   }
@@ -397,6 +414,7 @@
 
   function handleAction() {
     if (game.pending) return;
+    startMusicFromGesture();
 
     if (game.scene === "title") {
       resetRun();
