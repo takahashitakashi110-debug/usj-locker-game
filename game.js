@@ -138,7 +138,7 @@
     if (!AudioContextClass) return false;
     audioState.context = new AudioContextClass();
     audioState.master = audioState.context.createGain();
-    audioState.master.gain.value = 0.54;
+    audioState.master.gain.value = 1.08;
     audioState.master.connect(audioState.context.destination);
     return true;
   }
