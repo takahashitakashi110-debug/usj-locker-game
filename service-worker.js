@@ -1,4 +1,4 @@
-const CACHE_NAME = "usj-locker-game-v3";
+const CACHE_NAME = "usj-locker-game-v4";
 const ASSETS = [
   "./",
   "./index.html",
